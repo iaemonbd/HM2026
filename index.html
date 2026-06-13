@@ -56,10 +56,10 @@
       --ease:          cubic-bezier(0.25, 1, 0.5, 1);
     }
     body.night {
-      /* ✅ FIX 21: রেফারেন্স অনুযায়ী Night mode কালার আপডেট — bg-alt ও bg-card কে গভীর শেড */
-      --bg:            #03050a;
-      --bg-alt:        #080c14;
-      --bg-card:       #0c111c;
+      /* ✅ আধুনিক Night mode কালার স্কিম — গাঢ় নেভি/স্লেট টোন */
+      --bg:            #060911;
+      --bg-alt:        #0b1220;
+      --bg-card:       #111a2c;
       --gold:          #e6b800;
       --gold-light:    #ffd633;
       --gold-dim:      rgba(230,184,0,0.18);
@@ -727,7 +727,7 @@
       .bh-grid { grid-template-columns:1fr; }
       .bh-row { flex-direction:column; gap:8px; }
       /* ✅ FIX: Admin dashboard modal width */
-      .admin-dashboard { border-radius:12px; }
+      .admin-dashboard { height:100vh; }
     }
 
     /* ══════════════════════════════════════════════════════
@@ -974,9 +974,9 @@
     /* ══════════════════════════════════════════════════════
        ADMIN DASHBOARD
        ══════════════════════════════════════════════════════ */
-    .admin-dashboard-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.75); backdrop-filter:blur(8px); z-index:999997; display:none; align-items:center; justify-content:center; padding:20px; }
+    .admin-dashboard-overlay { position:fixed; inset:0; background:var(--bg); backdrop-filter:blur(8px); z-index:999997; display:none; align-items:center; justify-content:center; padding:0; }
     .admin-dashboard-overlay.show { display:flex; }
-    .admin-dashboard { width:100%; max-width:1100px; height:90vh; max-height:800px; background:var(--bg-card); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); border:1px solid var(--border); border-radius:20px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 30px 80px rgba(0,0,0,0.6); }
+    .admin-dashboard { width:100%; max-width:100%; height:100vh; max-height:100vh; background:var(--bg-card); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); border:none; border-radius:0; overflow:hidden; display:flex; flex-direction:column; box-shadow:none; }
     .admin-dash-header { padding:20px 28px; background:linear-gradient(135deg, rgba(196,154,27,0.12), rgba(196,154,27,0.03)); border-bottom:1px solid var(--border-subtle); display:flex; align-items:center; justify-content:space-between; }
     .admin-dash-title { display:flex; align-items:center; gap:14px; }
     .admin-dash-title-icon { width:44px; height:44px; background:linear-gradient(135deg, var(--gold), var(--gold-light)); border-radius:12px; display:flex; align-items:center; justify-content:center; color:#000; font-size:1.1rem; }
@@ -1042,7 +1042,7 @@
     .settings-card { background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:12px; padding:30px; }
     .settings-card h3 { font-size:1.2rem; color:var(--white); margin-bottom:25px; display:flex; align-items:center; gap:10px; }
     .settings-card h3 i { color:var(--gold); }
-    @media (max-width:768px) { .admin-form-grid { grid-template-columns:1fr; } .admin-dashboard { height:95vh; } }
+    @media (max-width:768px) { .admin-form-grid { grid-template-columns:1fr; } .admin-dashboard { height:100vh; } }
 
     /* Print protection */
     @media print { html,body { display:none!important; visibility:hidden!important; } }
@@ -1531,7 +1531,6 @@
       <button class="admin-tab active" data-tab="team"><i class="fas fa-users"></i> Team</button>
       <button class="admin-tab" data-tab="products"><i class="fas fa-box"></i> Products</button>
       <button class="admin-tab" data-tab="features"><i class="fas fa-star"></i> Features</button>
-      <button class="admin-tab" data-tab="businessHours"><i class="fas fa-clock"></i> Hours</button>
       <button class="admin-tab" data-tab="settings"><i class="fas fa-cog"></i> Settings</button>
       <button class="admin-tab" data-tab="credentials"><i class="fas fa-key"></i> API Keys</button>
       <button class="admin-tab" data-tab="security"><i class="fas fa-shield-alt"></i> Security</button>
@@ -1637,23 +1636,6 @@
         <div class="admin-list" id="featureAdminList"></div>
       </div>
       
-      <!-- BUSINESS HOURS TAB (নতুন) -->
-      <div class="admin-tab-content" id="adminTabBusinessHours">
-        <div class="admin-form-card">
-          <h3 class="admin-form-title"><i class="fas fa-clock"></i> Business Hours Management</h3>
-          <p style="color:var(--muted);font-size:0.85rem;margin-bottom:20px;">প্রতিটি দিনের জন্য ব্যবসার সময় সেট করুন। পরিবর্তন করলে ওয়েবসাইটে সাথে সাথে দেখাবে।</p>
-          <div class="bh-grid" id="bhGrid">
-            <!-- JS দিয়ে ডাইনামিক্যালি লোড হবে -->
-            <div style="text-align:center;padding:30px;color:var(--muted);">
-              <i class="fas fa-circle-notch fa-spin" style="color:var(--gold);font-size:1.5rem;"></i>
-            </div>
-          </div>
-          <button class="bh-add-btn" id="bhAddBtn"><i class="fas fa-plus"></i> Add Custom Entry</button>
-          <br>
-          <button class="bh-save-btn" id="bhSaveBtn"><i class="fas fa-save"></i> Save Business Hours</button>
-        </div>
-      </div>
-
       <!-- SETTINGS TAB -->
       <div class="admin-tab-content" id="adminTabSettings">
         <div class="settings-grid">
@@ -2145,14 +2127,16 @@ function renderSocialLinks() {
   container.innerHTML = links.map(l => `<a href="${l.url}" target="_blank" rel="noopener"><i class="${l.icon}"></i></a>`).join('');
 }
 
+// ✅ Business Hours এখন ফিক্সড (এডমিন থেকে পরিবর্তন করার অপশন নেই)
+const FIXED_BUSINESS_HOURS = [
+  { day: 'Saturday – Thursday', openTime: '8:00 AM', closeTime: '5:00 PM', isClosed: false },
+  { day: 'Friday',              openTime: '',        closeTime: '',       isClosed: true  }
+];
+
 function renderBusinessHours() {
   const container = document.getElementById('businessHoursList');
   if (!container) return;
-  const hours = siteData.businessHours || [];
-  if (hours.length === 0) {
-    container.innerHTML = '<p style="text-align:center;color:var(--muted);font-size:0.85rem;">Hours not available</p>';
-    return;
-  }
+  const hours = FIXED_BUSINESS_HOURS;
   container.innerHTML = hours.map(h => `
     <div class="hours-item">
       <span class="hours-day">${h.day}</span>
@@ -2432,7 +2416,6 @@ function initInteractions() {
       const content = document.getElementById(contentId);
       if (content) content.classList.add('active');
       // Special tab inits
-      if (target === 'businessHours') setTimeout(() => renderAdminBHGrid(), 50);
       if (target === 'security')      setTimeout(() => initDevInfoParticles(), 100);
       if (target === 'credentials')   setTimeout(() => initCredentialsTab(), 50);
     });
@@ -2595,7 +2578,7 @@ function openAdminDashboard() {
   // ✅ window.openAdminDashboard দ্বারা override হবে (BH + Credentials init সহ)
   document.getElementById('adminDashboardOverlay').classList.add('show');
   document.body.style.overflow = 'hidden';
-  loadAdminData().then(() => initBusinessHoursTab());
+  loadAdminData();
 }
 
 function closeAdminDashboard() {
@@ -2725,73 +2708,6 @@ function adminShowToast(msg, type = 'success') {
 }
 
 // ══════════════════════════════════════════════════════
-// BUSINESS HOURS ADMIN FUNCTIONS
-// ══════════════════════════════════════════════════════
-function renderAdminBHGrid() {
-  const grid = document.getElementById('bhGrid');
-  if (!grid) return;
-  const hours = (adminData && adminData.businessHours) ? adminData.businessHours : (siteData ? siteData.businessHours : []);
-  if (!hours || hours.length === 0) {
-    grid.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px;">No business hours found. Click "Add Custom Entry" to start.</p>';
-    return;
-  }
-  grid.innerHTML = hours.map((h, idx) => `
-    <div class="bh-row" data-id="${h.id}" data-idx="${idx}">
-      <span class="bh-day-label">${h.day}</span>
-      <label class="bh-closed-toggle">
-        <input type="checkbox" class="bh-toggle-input" id="bhOpen_${idx}" ${!h.isClosed ? 'checked' : ''} onchange="bhToggleOpen(${idx})">
-        <span class="bh-toggle-track"></span>
-        <span class="bh-toggle-label" id="bhOpenLabel_${idx}">${h.isClosed ? 'Closed' : 'Open'}</span>
-      </label>
-      <div class="bh-time-inputs" id="bhTimes_${idx}" style="${h.isClosed ? 'opacity:.35;pointer-events:none;' : ''}">
-        <input type="text" class="bh-open-time" value="${h.openTime || ''}" placeholder="9:00 AM" id="bhOpenTime_${idx}">
-        <span class="bh-separator">—</span>
-        <input type="text" class="bh-close-time" value="${h.closeTime || ''}" placeholder="6:00 PM" id="bhCloseTime_${idx}">
-      </div>
-      <button class="bh-delete-btn" onclick="bhDeleteRow('${h.id}')" title="Delete"><i class="fas fa-trash"></i></button>
-    </div>
-  `).join('');
-}
-
-window.bhToggleOpen = function(idx) {
-  const cb = document.getElementById('bhOpen_' + idx);
-  const lbl = document.getElementById('bhOpenLabel_' + idx);
-  const times = document.getElementById('bhTimes_' + idx);
-  const isOpen = cb.checked;
-  lbl.textContent = isOpen ? 'Open' : 'Closed';
-  times.style.opacity = isOpen ? '1' : '0.35';
-  times.style.pointerEvents = isOpen ? 'auto' : 'none';
-};
-
-window.bhDeleteRow = function(id) {
-  if (!confirm('This entry will be removed. Continue?')) return;
-  const row = document.querySelector(`.bh-row[data-id="${id}"]`);
-  if (row) { row.style.opacity = '0'; row.style.transform = 'translateX(20px)'; setTimeout(() => row.remove(), 300); }
-};
-
-function bhCollectData() {
-  const rows = document.querySelectorAll('#bhGrid .bh-row');
-  const result = [];
-  rows.forEach((row, idx) => {
-    const id = row.dataset.id;
-    const cb = document.getElementById('bhOpen_' + idx);
-    const openInput = document.getElementById('bhOpenTime_' + idx);
-    const closeInput = document.getElementById('bhCloseTime_' + idx);
-    const dayLabel = row.querySelector('.bh-day-label');
-    if (!dayLabel) return;
-    result.push({
-      id: id || 'bh_' + Date.now() + '_' + idx,
-      day: dayLabel.textContent.trim(),
-      openTime: openInput ? openInput.value.trim() : '',
-      closeTime: closeInput ? closeInput.value.trim() : '',
-      isClosed: cb ? !cb.checked : true,
-      sortOrder: idx + 1
-    });
-  });
-  return result;
-}
-
-// ══════════════════════════════════════════════════════
 // QR CODE GENERATION
 // ══════════════════════════════════════════════════════
 // ✅ FIX 16: chart.googleapis.com deprecated — quickchart.io ব্যবহার (reliable)
@@ -2884,72 +2800,6 @@ function initDevInfoParticles() {
       animation-delay:${delays[i]}s;
     "></div>
   `).join('');
-}
-
-// ══════════════════════════════════════════════════════
-// BUSINESS HOURS — Tab init & save
-// ══════════════════════════════════════════════════════
-function initBusinessHoursTab() {
-  if (adminData && adminData.businessHours) {
-    renderAdminBHGrid();
-  } else if (siteData && siteData.businessHours) {
-    if (!adminData) adminData = {};
-    adminData.businessHours = siteData.businessHours;
-    renderAdminBHGrid();
-  }
-
-  // ✅ FIX 10: Duplicate listener প্রতিরোধ — Add custom entry
-  const addBtn = document.getElementById('bhAddBtn');
-  if (addBtn && !addBtn._listenerAttached) {
-    addBtn._listenerAttached = true;
-    addBtn.addEventListener('click', () => {
-      const grid = document.getElementById('bhGrid');
-      const existingRows = grid.querySelectorAll('.bh-row').length;
-      const newId = 'bh_custom_' + Date.now();
-      const newRow = document.createElement('div');
-      newRow.className = 'bh-row';
-      newRow.dataset.id = newId;
-      newRow.dataset.idx = existingRows;
-      newRow.innerHTML = `
-        <input type="text" placeholder="Day name" style="min-width:90px;padding:8px;background:var(--bg);border:1px solid var(--border-subtle);border-radius:8px;color:var(--white);font-size:0.85rem;outline:none;" class="bh-day-label" value="">
-        <label class="bh-closed-toggle">
-          <input type="checkbox" class="bh-toggle-input" id="bhOpen_${existingRows}" checked onchange="bhToggleOpen(${existingRows})">
-          <span class="bh-toggle-track"></span>
-          <span class="bh-toggle-label" id="bhOpenLabel_${existingRows}">Open</span>
-        </label>
-        <div class="bh-time-inputs" id="bhTimes_${existingRows}">
-          <input type="text" class="bh-open-time" value="" placeholder="9:00 AM" id="bhOpenTime_${existingRows}">
-          <span class="bh-separator">—</span>
-          <input type="text" class="bh-close-time" value="" placeholder="6:00 PM" id="bhCloseTime_${existingRows}">
-        </div>
-        <button class="bh-delete-btn" onclick="bhDeleteRow('${newId}')" title="Delete"><i class="fas fa-trash"></i></button>
-      `;
-      grid.appendChild(newRow);
-    });
-  }
-
-  // ✅ FIX 10: Duplicate listener প্রতিরোধ — Save button
-  const saveBtn = document.getElementById('bhSaveBtn');
-  if (saveBtn && !saveBtn._listenerAttached) {
-    saveBtn._listenerAttached = true;
-    saveBtn.addEventListener('click', async () => {
-      const data = bhCollectData();
-      if (data.length === 0) { adminShowToast('No hours to save!', 'error'); return; }
-      saveBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Saving...';
-      saveBtn.disabled = true;
-      const result = await API.updateBusinessHours(data);
-      saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Business Hours';
-      saveBtn.disabled = false;
-      if (result.success) {
-        adminShowToast('Business hours saved successfully!', 'success');
-        // Reload site data to reflect on public page
-        siteData = await API.getAll();
-        if (siteData) renderBusinessHours();
-      } else {
-        adminShowToast('Failed: ' + (result.message || 'Error'), 'error');
-      }
-    });
-  }
 }
 
 // ══════════════════════════════════════════════════════
