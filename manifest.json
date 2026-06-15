@@ -5,8 +5,8 @@
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#060911",
-  "theme_color": "#060911",
+  "background_color": "#0a1628",
+  "theme_color": "#0a1628",
   "orientation": "portrait-primary",
   "permissions": ["notifications", "push"],
   "icons": [
@@ -29,4 +29,7 @@
       "purpose": "maskable"
     }
   ],
-  "categories": ["business", "producti
+  "categories": ["business", "productivity"],
+  "lang": "en-US",
+  "dir": "ltr"
+}
