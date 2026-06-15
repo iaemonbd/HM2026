@@ -8,6 +8,7 @@
   "background_color": "#060911",
   "theme_color": "#060911",
   "orientation": "portrait-primary",
+  "permissions": ["notifications", "push"],
   "icons": [
     {
       "src": "images/ico.png",
@@ -28,7 +29,4 @@
       "purpose": "maskable"
     }
   ],
-  "categories": ["business", "productivity"],
-  "lang": "en-US",
-  "dir": "ltr"
-}
+  "categories": ["business", "producti
