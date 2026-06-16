@@ -1,13 +1,15 @@
 // ══════════════════════════════════════════════════════
-// HM Label Service Worker
+// HM Label Service Worker — FIXED
 // Created by IA EMON
-// v2.3 — Push Notification সাপোর্ট যোগ করা হয়েছে
+// v3.0 — Push Notification সম্পূর্ণ ঠিক করা হয়েছে
 // ══════════════════════════════════════════════════════
 
-const CACHE_NAME = 'hmlabel-v2.3';
+const CACHE_NAME  = 'hmlabel-v3.0';
 const OFFLINE_URL = './index.html';
 
-// Files to cache
+// ✅ আপনার Apps Script URL এখানে দিন
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzSsU-fWIrrkhP5CU4hfbSfWJyWjGIVmet1pS60xCTxiISCcVjZvL9WwO88rTUdcnz2/exec';
+
 const urlsToCache = [
   './',
   './index.html',
@@ -17,7 +19,7 @@ const urlsToCache = [
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css'
 ];
 
-// Install event
+// ── Install ────────────────────────────────────────────
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -25,14 +27,12 @@ self.addEventListener('install', (event) => {
         console.log('✅ Cache opened');
         return cache.addAll(urlsToCache);
       })
-      .catch((err) => {
-        console.log('⚠️ Cache addAll failed:', err);
-      })
+      .catch((err) => console.log('⚠️ Cache addAll failed:', err))
   );
   self.skipWaiting();
 });
 
-// Activate event
+// ── Activate ──────────────────────────────────────────
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -49,13 +49,11 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch event
+// ── Fetch ─────────────────────────────────────────────
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests
   if (event.request.method !== 'GET') return;
-  
-  // Skip API calls (always fetch fresh)
-  if (event.request.url.includes('script.google.com') || 
+
+  if (event.request.url.includes('script.google.com') ||
       event.request.url.includes('api.telegram.org') ||
       event.request.url.includes('ipinfo.io') ||
       event.request.url.includes('open-meteo.com') ||
@@ -65,67 +63,94 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Cache hit - return response
-        if (response) {
-          return response;
-        }
+    caches.match(event.request).then((response) => {
+      if (response) return response;
 
-        // Clone the request
-        const fetchRequest = event.request.clone();
+      return fetch(event.request.clone()).then((response) => {
+        if (!response || response.status !== 200 || response.type !== 'basic') return response;
 
-        return fetch(fetchRequest).then((response) => {
-          // Check if valid response
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
-          }
-
-          // Clone the response
-          const responseToCache = response.clone();
-
-          caches.open(CACHE_NAME)
-            .then((cache) => {
-              cache.put(event.request, responseToCache);
-            });
-
-          return response;
-        }).catch((err) => {
-          console.log('⚠️ Fetch failed:', err);
-          // Return offline page if available
-          return caches.match(OFFLINE_URL);
+        const responseToCache = response.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, responseToCache);
         });
-      })
+        return response;
+      }).catch(() => caches.match(OFFLINE_URL));
+    })
   );
 });
 
 // ══════════════════════════════════════════════════════
-// ✅ PUSH NOTIFICATION — রিসিভ ও দেখানো
+// ✅ FIXED PUSH HANDLER
+// সমস্যা ছিল: Apps Script থেকে encrypted payload পাঠানো
+//   সম্ভব ছিল না (ECDSA নেই), তাই empty push আসতো।
+// সমাধান: push event এ data না থাকলে Apps Script থেকে
+//   getLastNotification দিয়ে notification data fetch করা।
 // ══════════════════════════════════════════════════════
 self.addEventListener('push', (event) => {
-  let data = { title: 'HM Label', body: 'নতুন আপডেট এসেছে!', url: 'https://hmlabel.com', icon: 'https://hmlabel.com/images/ico.png', badge: 'https://hmlabel.com/images/ico.png' };
-
-  if (event.data) {
-    try { data = { ...data, ...event.data.json() }; }
-    catch (e) { data.body = event.data.text(); }
-  }
-
-  const options = {
-    body:    data.body,
-    icon:    data.icon  || 'https://hmlabel.com/images/ico.png',
-    badge:   data.badge || 'https://hmlabel.com/images/ico.png',
-    image:   data.image || undefined,
-    data:    { url: data.url || 'https://hmlabel.com' },
-    vibrate: [200, 100, 200],
-    requireInteraction: false,
-    actions: [
-      { action: 'open',    title: '🔗 দেখুন' },
-      { action: 'dismiss', title: '✕ বন্ধ করুন' }
-    ]
+  // Default fallback data
+  const defaultData = {
+    title: 'HM Label',
+    body:  'নতুন আপডেট এসেছে! ক্লিক করে দেখুন।',
+    url:   'https://hmlabel.com',
+    icon:  'https://hmlabel.com/images/ico.png',
+    badge: 'https://hmlabel.com/images/ico.png',
+    image: undefined
   };
 
   event.waitUntil(
-    self.registration.showNotification(data.title, options)
+    (async () => {
+      let data = { ...defaultData };
+
+      // ✅ Step 1: event.data থেকে পাওয়ার চেষ্টা
+      if (event.data) {
+        try {
+          const parsed = event.data.json();
+          data = { ...defaultData, ...parsed };
+        } catch (e) {
+          // JSON না হলে text হিসেবে body তে রাখা
+          data.body = event.data.text() || data.body;
+        }
+      } else {
+        // ✅ Step 2: event.data না থাকলে Apps Script থেকে fetch
+        // (Empty push এর ক্ষেত্রে এটিই কাজ করবে)
+        try {
+          const response = await fetch(
+            APPS_SCRIPT_URL + '?action=getLastNotification',
+            { cache: 'no-store' }
+          );
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success && result.data) {
+              data = { ...defaultData, ...result.data };
+            }
+          }
+        } catch (fetchErr) {
+          console.log('⚠️ Could not fetch notification data:', fetchErr);
+          // fallback: defaultData ব্যবহার করা হবে
+        }
+      }
+
+      // ✅ Step 3: Notification দেখানো
+      const options = {
+        body:    data.body,
+        icon:    data.icon  || defaultData.icon,
+        badge:   data.badge || defaultData.icon,
+        data:    { url: data.url || 'https://hmlabel.com' },
+        vibrate: [200, 100, 200],
+        requireInteraction: false,
+        actions: [
+          { action: 'open',    title: '🔗 দেখুন' },
+          { action: 'dismiss', title: '✕ বন্ধ করুন' }
+        ]
+      };
+
+      // Image শুধু থাকলেই যোগ করা
+      if (data.image) {
+        options.image = data.image;
+      }
+
+      await self.registration.showNotification(data.title, options);
+    })()
   );
 });
 
@@ -134,6 +159,7 @@ self.addEventListener('push', (event) => {
 // ══════════════════════════════════════════════════════
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+
   if (event.action === 'dismiss') return;
 
   const targetUrl = (event.notification.data && event.notification.data.url)
